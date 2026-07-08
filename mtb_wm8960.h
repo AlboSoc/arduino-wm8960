@@ -51,8 +51,12 @@ extern "C"
 
 #define WM8960_I2C_ADDRESS          (0x1A)
 
-#ifdef ARDUINO
-#  define WM8960_LOG(msg)  Serial.println(msg)
+#ifndef WM8960_ENABLE_LOGGING
+#  define WM8960_ENABLE_LOGGING 1
+#endif
+
+#if defined(ARDUINO) && WM8960_ENABLE_LOGGING
+#  define WM8960_LOG(msg)  do { Serial.print("["); Serial.print(micros()); Serial.print(" us] "); Serial.println(msg); } while (0)
 #else
 #  define WM8960_LOG(msg)  
 #endif

@@ -654,12 +654,30 @@ bool mtb_wm8960_write(mtb_wm8960_reg_t enum_reg, uint16_t value){
     snprintf(msg, 80,  "mtb_wm8960_write 0x%x = 0x%x", enum_reg, value );
     WM8960_LOG(msg);
     bool result = false;
-    uint32_t count=0;
-    while(!result){
+    uint32_t start_us = micros();
+    uint32_t count = 0;
+    while (!result) {
         result = mtb_wm8960_write_ex(enum_reg, value);
-        if (count>0 && count++ > write_retry_count){
-            break;
+        if (!result) {
+            count++;
+            if (write_retry_count != 0 && count > write_retry_count) {
+                char fail_msg[96];
+                snprintf(fail_msg, sizeof(fail_msg),
+                         "mtb_wm8960_write failed reg=0x%x value=0x%x retries=%lu",
+                         enum_reg, value, (unsigned long)count);
+                WM8960_LOG(fail_msg);
+                break;
+            }
         }
+    }
+    uint32_t duration_us = micros() - start_us;
+    if (!result || count > 0 || duration_us > 50000u) {
+        char done_msg[128];
+        snprintf(done_msg, sizeof(done_msg),
+                 "mtb_wm8960_write_complete reg=0x%x value=0x%x result=%s attempts=%lu duration_us=%lu",
+                 enum_reg, value, result ? "ok" : "fail",
+                 (unsigned long)(count + 1), (unsigned long)duration_us);
+        WM8960_LOG(done_msg);
     }
     return result;
 }
